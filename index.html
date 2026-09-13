@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PixelTools — Video to GIF</title>
+<meta name="description" content="Convert video clips into GIFs entirely in your browser. No uploads, no server, up to 4K." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
+</head>
+<body>
+
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="20" height="20" rx="3" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M6.5 15V7L11 11L15.5 7V15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <span class="brand-name">PixelTools</span>
+        <span class="brand-sub">Video to GIF</span>
+      </div>
+    </div>
+    <div class="privacy-badge">
+      <i data-lucide="shield-check" aria-hidden="true"></i>
+      <span>100% Client-Side</span>
+    </div>
+  </div>
+</header>
+
+<main id="feature-warning" class="feature-warning" role="alert" hidden></main>
+
+<main class="page">
+
+  <!-- ============== HERO ============== -->
+  <section class="hero" id="upload-section">
+    <div class="hero-copy">
+      <h1>Turn any clip into a GIF, without leaving your browser</h1>
+      <p>PixelTools decodes, crops, and encodes your video locally — your file never touches a server, from 240p previews up to native 4K.</p>
+    </div>
+
+    <div class="upload-zone" id="upload-zone" tabindex="0" role="button" aria-label="Upload a video file">
+      <input type="file" id="file-input" accept="video/*,.mp4,.webm,.mov,.avi,.mkv" hidden />
+      <i data-lucide="upload-cloud" class="upload-icon" aria-hidden="true"></i>
+      <p class="upload-title">Drop your video here</p>
+      <p class="upload-sub">or browse files</p>
+      <button type="button" class="btn btn-primary" id="browse-btn">Browse Files</button>
+      <p class="upload-formats">MP4 &nbsp;•&nbsp; WebM &nbsp;•&nbsp; MOV &nbsp;•&nbsp; MKV</p>
+    </div>
+
+    <p class="privacy-note">
+      <i data-lucide="lock" aria-hidden="true"></i>
+      PixelTools processes your video locally in your browser. Nothing is uploaded, ever.
+    </p>
+  </section>
+
+  <!-- ============== WORKSPACE ============== -->
+  <section class="workspace" id="workspace" hidden>
+
+    <div class="workspace-grid">
+
+      <!-- Preview column -->
+      <div class="panel preview-panel">
+        <video id="video-el" class="preview-video" controls playsinline></video>
+        <div class="video-meta" id="video-meta"></div>
+
+        <div class="timeline-section">
+          <div class="timeline-header">
+            <span class="panel-label">Trim range</span>
+            <span class="selection-duration" id="selection-duration">Selection: 00:00.000</span>
+          </div>
+          <div class="timeline-root" id="timeline-root"></div>
+          <div class="time-inputs">
+            <label>
+              Start
+              <input type="text" id="start-time-input" inputmode="numeric" placeholder="00:00.000" />
+            </label>
+            <label>
+              End
+              <input type="text" id="end-time-input" inputmode="numeric" placeholder="00:00.000" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings column -->
+      <div class="panel settings-panel">
+        <h2 class="panel-title">Conversion settings</h2>
+
+        <div class="field-group">
+          <label class="field-label" for="resolution-select">Resolution</label>
+          <select id="resolution-select" class="select"></select>
+          <div class="custom-fields" id="custom-res-fields" hidden>
+            <label>Width <input type="number" id="custom-width" min="2" max="7680" /></label>
+            <label>Height <input type="number" id="custom-height" min="2" max="4320" /></label>
+            <button type="button" class="chip-btn active" id="lock-aspect-btn" aria-pressed="true">
+              <i data-lucide="link" aria-hidden="true"></i> Lock aspect ratio
+            </button>
+          </div>
+          <label class="checkbox-row">
+            <input type="checkbox" id="keep-aspect-checkbox" checked />
+            Keep aspect ratio
+          </label>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="fps-select">Frame rate</label>
+          <select id="fps-select" class="select"></select>
+          <div class="custom-fields" id="custom-fps-field" hidden>
+            <label>Custom FPS <input type="number" id="custom-fps" min="1" max="60" value="15" /></label>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="quality-slider">
+            Quality <span class="field-value" id="quality-label">High (80)</span>
+          </label>
+          <input type="range" id="quality-slider" class="slider" min="0" max="100" value="80" />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="dithering-select">Dithering</label>
+          <select id="dithering-select" class="select"></select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="loop-select">Loop</label>
+          <select id="loop-select" class="select"></select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="crop-select">Crop</label>
+          <select id="crop-select" class="select"></select>
+          <div class="custom-fields grid-4" id="custom-crop-fields" hidden>
+            <label>X <input type="number" id="crop-x" min="0" /></label>
+            <label>Y <input type="number" id="crop-y" min="0" /></label>
+            <label>W <input type="number" id="crop-w" min="2" /></label>
+            <label>H <input type="number" id="crop-h" min="2" /></label>
+          </div>
+        </div>
+
+        <div class="field-group two-col">
+          <div>
+            <label class="field-label" for="rotate-select">Rotate</label>
+            <select id="rotate-select" class="select"></select>
+          </div>
+          <div>
+            <label class="field-label" for="flip-select">Flip</label>
+            <select id="flip-select" class="select"></select>
+          </div>
+        </div>
+
+        <div class="estimate-panel" id="estimate-panel">
+          <div class="estimate-row"><span>Duration</span><span id="estimate-duration">—</span></div>
+          <div class="estimate-row"><span>Resolution</span><span id="estimate-resolution">—</span></div>
+          <div class="estimate-row"><span>FPS</span><span id="estimate-fps">—</span></div>
+          <div class="estimate-row"><span>Estimated frames</span><span id="estimate-frames">—</span></div>
+          <div class="estimate-row estimate-highlight"><span>Estimated GIF size</span><span id="estimate-size">—</span></div>
+        </div>
+
+        <div class="heavy-warning" id="heavy-warning" hidden></div>
+
+        <button type="button" class="btn btn-primary btn-block" id="convert-btn">
+          <i data-lucide="film" aria-hidden="true"></i> Convert to GIF
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== PROGRESS ============== -->
+  <section class="progress-section" id="progress-section" hidden>
+    <div class="panel progress-panel">
+      <h2 class="panel-title">Converting</h2>
+      <p class="progress-stage" id="progress-stage">Preparing video...</p>
+      <div class="progress-track">
+        <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+      </div>
+      <div class="progress-pct" id="progress-pct">0%</div>
+      <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+    </div>
+  </section>
+
+  <!-- ============== RESULT ============== -->
+  <section class="result-section" id="result-section" hidden>
+    <div class="panel result-panel">
+      <h2 class="panel-title">GIF ready</h2>
+      <div class="result-grid">
+        <div class="result-preview">
+          <img id="result-gif" alt="Converted GIF preview" />
+        </div>
+        <div class="result-details">
+          <div class="result-meta">
+            <div class="result-meta-row"><span>Resolution</span><span id="result-resolution">—</span></div>
+            <div class="result-meta-row"><span>FPS</span><span id="result-fps">—</span></div>
+            <div class="result-meta-row"><span>Duration</span><span id="result-duration">—</span></div>
+            <div class="result-meta-row"><span>Frames</span><span id="result-frames">—</span></div>
+            <div class="result-meta-row"><span>File size</span><span id="result-size">—</span></div>
+          </div>
+
+          <div class="before-after">
+            <div class="ba-block">
+              <span class="ba-label">Original video</span>
+              <span class="ba-value" id="before-size">—</span>
+            </div>
+            <i data-lucide="arrow-right" aria-hidden="true"></i>
+            <div class="ba-block">
+              <span class="ba-label">Converted GIF</span>
+              <span class="ba-value" id="after-size">—</span>
+            </div>
+            <span class="ratio-badge" id="ratio-badge">—</span>
+          </div>
+
+          <div class="result-actions">
+            <button type="button" class="btn btn-primary" id="download-btn">
+              <i data-lucide="download" aria-hidden="true"></i> Download GIF
+            </button>
+            <button type="button" class="btn btn-secondary" id="edit-settings-btn">Edit Settings</button>
+            <button type="button" class="btn btn-secondary" id="convert-another-btn">Convert Another</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>PixelTools runs entirely in your browser. GIF is limited to 256 colours per frame, so very colourful or high-motion clips may show visible dithering — this is a format limitation, not a bug. See the README for details and browser support notes.</p>
+</footer>
+
+<script>
+  window.addEventListener("load", () => { if (window.lucide) lucide.createIcons(); });
+  // Re-run icon creation after dynamic sections toggle visibility.
+  const _obs = new MutationObserver(() => window.lucide && lucide.createIcons());
+  _obs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ["hidden"] });
+</script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
